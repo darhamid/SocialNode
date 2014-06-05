@@ -1,0 +1,292 @@
+html
+  head
+    title sold_0002
+    meta(http-equiv='Content-Type', content='text/html; charset=windows-1251')
+  body(bgcolor='#FFFFFF', leftmargin='0', topmargin='0', marginwidth='0', marginheight='0')
+    table(width='780', border='0', align='center', cellpadding='0', cellspacing='0')
+      tr
+        td(width='780', height='100%', align='center', valign='middle', bgcolor='#666666', style='padding: 11px;')
+          table(width='100%', border='0', cellspacing='0', cellpadding='0')
+            tr
+              td(width='214', valign='top', bgcolor='#FFFFFF')
+                table(width='100%', height='100%', border='0', cellpadding='0', cellspacing='9')
+                  tr
+                    td
+                      if(posts.length == 0)
+                        img(src='/uploads/photos/'+user.photo, width=240)
+                      else
+                        img(src='/uploads/photos/'+clickeduser.photo, width=240)
+                  tr
+                    td(valign='top')
+                      table(width='100%', border='0', cellspacing='3', cellpadding='0')
+                        if(posts.length == 0 && user.id == currentUser.id)
+                          tr
+                            td(bgcolor='#F5F2F2')
+                              div(class="left-navigation")
+                                img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                a(href='/user/wallposts/'+currentUser._id.toHexString()) Wall
+                          tr
+                            td(bgcolor='#F5F2F2')
+                              div(class="left-navigation")
+                                img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                a(href='/userinfo') Profile
+                          tr
+                            td(bgcolor='#F5F2F2')
+                              div(class="left-navigation")
+                                img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                a(href='/show/friends') Friends
+                          tr
+                            td(bgcolor='#F5F2F2')
+                              div(class="left-navigation")
+                                img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                a(href='/show/friendrequests') Friend Request
+                          tr
+                            td(bgcolor='#F5F2F2')
+                              div(class="left-navigation")
+                                img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                a(href='/user/videos/'+ currentUser._id) Videos Posted
+                          tr
+                            td(bgcolor='#F5F2F2')
+                              div(class="left-navigation")
+                                img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                a(href='/videos/new') Upload New Video
+                          tr
+                            td(bgcolor='#F5F2F2')
+                              div(class="left-navigation")
+                                img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                a(href='/userinfo/new') Change Profile Picture
+                        else if(posts.length == 0 && user.id != currentUser.id)
+                          tr
+                            td(bgcolor='#F5F2F2')
+                              div(class="left-navigation")
+                                img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                a(href='/userinfo') Home
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/user/wallposts/'+user._id.toHexString())!= user.username+"'s"+" Wall"
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/user/videos/'+ user._id.toHexString()) Videos Posted 
+                        else
+                          if(clickeduser.id == currentUser.id)
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/user/wallposts/'+currentUser._id.toHexString()) Wall
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/userinfo') Profile
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/show/friends') Friends
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/show/friendrequests') Friend Request
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/user/videos/'+ clickeduser._id) Videos Posted
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/videos/new') Upload New Video
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/userinfo/new') Change Profile Picture
+                             
+                          else
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/userinfo') Home
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/user/wallposts/'+clickeduser._id.toHexString())!= clickeduser.username+"'s"+" Wall"
+                            tr
+                              td(bgcolor='#F5F2F2')
+                                div(class="left-navigation")
+                                  img(src='/images/right_nav_dop.gif', width='49', height='30', alt='')
+                                  a(href='/user/videos/'+ clickeduser._id.toHexString()) Videos Posted 
+
+              td(width='11', rowspan='2')
+                img(src='/images/spacer.gif', width='11', height='1')
+              td(valign='top', bgcolor='#FFFFFF')
+                table(width='100%', height='100%', border='0', cellpadding='0', cellspacing='9')
+                  tr
+                    td
+                  tr
+                    td
+                      table(width='100%', border='0', cellspacing='5', cellpadding='0')
+                        tr
+                          td(align="center")
+                            h2 Wall
+                        tr
+                          td
+                            table(width='100%', border='0', cellspacing='10', cellpadding='0')
+                              tr
+                                td(rowspan='2')
+                                  table(width='100%', border='0', cellspacing='0', cellpadding='0')
+                                    tr
+                                      td(bgcolor='#F5F2F2', style='padding: 2px;')
+                                        table(width='100%', border='0', cellspacing='5', cellpadding='0', bgcolor='#FFFFFF')
+                                          tr
+                                            td
+                                              if(posts.length == 0)
+                                                if(user.id == currentUser.id)
+                                                  form(method ='post',action = '/wall/create')
+                                                    input(type="hidden", name="_id", value=currentUser._id.toHexString())
+                                                    div
+                                                      textarea(id ='txtbody', name ='post[body]',rows='3', cols ='60',maxlength ='400')
+                                                    br
+                                                    div(align ='right')
+                                                      input(type ='submit', name ='submit', value = '     Post     ')
+                                                else
+                                                  form(method ='post',action = '/wall/create')
+                                                    input(type="hidden", name="_id", value=user._id.toHexString())
+                                                    div
+                                                      textarea(id ='txtbody', name ='post[body]',rows='3', cols ='60')
+                                                    br
+                                                    div(align ='right')
+                                                      input(type ='submit', name ='submit', value = '     Post     ')
+                                              else 
+                                                if(clickeduser.id == currentUser.id)
+                                                  form(method ='post',action = '/wall/create')
+                                                    input(type="hidden", name="_id", value=currentUser._id.toHexString())
+                                                    div
+                                                      textarea(id ='txtbody', name ='post[body]',rows='3', cols ='60',maxlength ='400')
+                                                    br
+                                                    div(align ='right')
+                                                      input(type ='submit', name ='submit', value = '     Post     ')
+                                                else
+                                                  form(method ='post',action = '/wall/create')
+                                                    input(type="hidden", name="_id", value=clickeduser._id.toHexString())
+                                                    div
+                                                      textarea(id ='txtbody', name ='post[body]',rows='3', cols ='60')
+                                                    br
+                                                    div(align ='right')
+                                                      input(type ='submit', name ='submit', value = '     Post     ')
+                         
+                        tr
+                          td
+                            table(width='100%', border='0', cellspacing='10', cellpadding='0')
+                              tr
+                               div(class="all-wall-post")
+                                 -var ct = 0;
+                                 -each post in posts
+                                   -ct+=1;
+                                   div(class="wall-parent")
+                                     div(class="user-wall")
+                                       -each user in users
+                                         if(post.user_id == user.id) 
+                                           if(post.friend_id)
+                                             h6=user.username+ "  shared Throught"+"===>> "+post.friend_id
+                                           img(src='/uploads/photos/'+user.photo, width=45,style="float:left;")
+                                     div(class="user-post")
+                                       p=post.body
+                                       h6='posted on: ' + '&nbsp;' + post.created
+                                       br
+                                       div(class ="user-comment-parent")
+                                         -each comment in comments
+                                           if(comment.post_id == post.id)
+                                             -each cmntuser in cmntusers
+                                               if(comment.user_id == cmntuser.id)
+                                                 div(class ="comment-user")
+                                                   img(src='/uploads/photos/'+cmntuser.photo, width=30)
+                                             div(class = "comment-body")
+                                               p=comment.body
+                                               h6=comment.date
+                                               br
+                                       
+                                       form( id="myform"+ct, method="post", action='comment')
+                                         input( id = "txtid", type="hidden", name="_id", value=post._id.toHexString())
+                                         a(class="comment-link", id=ct , onclick ="commentbox(this.id)", href="javascript:;") Comment
+                                         if(post.user_id ==currentUser.id)
+                                           a(href='/delete/wallpost/'+post._id.toString(),  onclick="return validate();") Delete
+                                         else
+                                           a(href='/share/wallpost/'+post._id.toString()) Share This Post
+                                            
+            tr
+              td(valign='bottom', bgcolor='#FFFFFF', style='padding: 9px;')
+                 
+              td(valign='bottom', bgcolor='#FFFFFF')
+                table(width='100%', border='0', cellspacing='9', cellpadding='0')
+                  tr
+                    td(height='56', valign='top', bgcolor='#3A8356')
+                      table(width='100%', border='0', cellspacing='9', cellpadding='0')
+                        tr
+                          td.white
+                            | Copyright © Pragtech.co.in. All rights reserved.
+                            a(href='http://www.pragtech.co.in', style='color: #FFFFFF; text-decoration: none;') Pragmatic Techsoft
+            
+            script
+              function validate() {
+                var Ok = confirm("Do you Want to Delete The Post");
+                if(Ok)
+                  return true
+                return false
+              };
+              function commentbox(clicked_id) {
+                var cmnt =document.getElementById(clicked_id);
+                
+                 
+                
+                var area = document.createElement("textarea");
+                area.id = "MyEditBox";
+                area.name ="commentbody";
+                area.style.width = "340px";
+                area.style.height = "30px";
+                area.innerHTML = "";
+                var c = document.getElementById("myform"+clicked_id);
+                
+                
+                var button = document.createElement("button");
+                button.id = "mybutton";
+                button.type ="submit";
+                button.innerHTML ="Post Comment";
+                
+                c.appendChild(area);
+                c.appendChild(button);
+                    
+                cmnt.parentNode.removeChild(cmnt);
+                /*area.onfocus = function(){
+                    if(area.value == "Your Comment Here"){
+                           area.value = "";
+                  }
+                 };
+
+                 area.onblur = function(){
+                      if(area.value==""){
+                          area.value="Your Comment Here";
+                     }
+                 };*/
+               
+                 button.onclick = function() {
+                   var txtarea = document.getElementById("MyEditBox");
+                   if(txtarea.value == "") {
+                     alert("insert something to comment");
+                     txtarea.focus();
+                     return false;
+                   }
+                   return true;
+                 };
+
+              }
+
