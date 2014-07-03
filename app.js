@@ -1,9 +1,10 @@
 
+/
 /**
 * Module dependencies.
 */
 var express = require('express'),
-    form = require('formidable'),
+    formidable = require('formidable'),
     jade = require('jade'),
     mongoose = require('mongoose'),
     util =  require('util'),
@@ -13,9 +14,10 @@ var express = require('express'),
     sys = require('sys'),
     path = require('path'),
     geo = require('geo'),
-    fs = require('fs'),
+    fs   = require('fs-extra'),
+    stream = require('stream'),
     check = require('validator').check,
-    sanitize = require('validator').sanitize,      
+    sanitize = require('validator').sanitize,
     db,
     Friends,
     User,
@@ -32,17 +34,17 @@ var express = require('express'),
 
 var oauthConsumer = new OAuth(
     "https://api.twitter.com/oauth/request_token",
-    "http://api.twitter.com/oauth/access_token", 
+    "http://api.twitter.com/oauth/access_token",
     "D97Eq8gkT2rtHmj78M01OA",
-    "WTQSVx2eZ34Md3GsnDFzDt8cjvUT9OtIaGpKOB8oVa0", 
+    "WTQSVx2eZ34Md3GsnDFzDt8cjvUT9OtIaGpKOB8oVa0",
     "1.0", null, "HMAC-SHA1");
 var twitterClient = tweasy.init(oauthConsumer, {
   //access_token : "http://api.twitter.com/oauth/request_token",
   //access_token_secret : "http://api.twitter.com/oauth/access_token"
-});   
-     
+});
+
 var app = module.exports = express.createServer();
-app.use(form({ keepExtensions: true }));
+app.use(formidable({ keepExtensions: true }));
 
 function renderJadeFile(template, options) {
   console.log("+++++++++++++++++++++++++++++++++++++",template, options);
@@ -57,9 +59,12 @@ app.configure(function(){
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
   app.use(express.favicon());
-  app.use(express.bodyParser());
   //app.use(connectTimeout({ time: 10000 }));
   app.use(express.logger());
+  
+  app.use(express.bodyParser());
+//  app.use(express.logger('dev')); app.use(express.json());
+//  app.use(express.urlencoded());
   app.use(express.methodOverride());
   app.use(express.cookieParser());
   app.use(express.session({ secret: 'htuayreve'}));
@@ -104,7 +109,7 @@ models.defineModels(mongoose, function() {
   app.Post = Post = mongoose.model('Post');
   app.LoginToken = LoginToken = mongoose.model('LoginToken');
   db = mongoose.connect(app.set('db-uri'));
-})
+});
 
  
 
@@ -113,7 +118,7 @@ models.defineModels(mongoose, function() {
 function NotFound(msg) {
   this.name = 'NotFound';
   Error.call(this, msg);
-  Error.captureStackTrace(this, arguments.callee);
+  Error.captureStackTrace(this, arguments.callee );
 }
 
 sys.inherits(NotFound, Error);
@@ -138,13 +143,13 @@ app.error(function(err, req, res, next) {
   }
 });
 
-if (app.settings.env == 'production') {
+if (app.settings.env === 'production') {
   app.error(function(err, req, res) {
     res.render('500.jade', {
       status: 500,
       locals: {
         error: err
-      } 
+      }
     });
   });
 }
@@ -164,13 +169,13 @@ emails = {
       for (var i = 0, len = keys.length; i < len; i++) {
         k = keys[i];
         if (!mailOptions.hasOwnProperty(k))
-          mailOptions[k] = app.set('mailOptions')[k]
+          mailOptions[k] = app.set('mailOptions')[k];
       }
 
       console.log('[SENDING MAIL]', sys.inspect(mailOptions));
 
       // Only send mails in production
-      if (app.settings.env == 'development') {
+      if (app.settings.env === 'development') {
         mailer.send(mailOptions,
           function(err, result) {
             console.log("++++++++++++vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv+++++++",result);
@@ -193,9 +198,7 @@ emails = {
 function authenticateFromLoginToken(req, res, next) {
   var cookie = JSON.parse(req.cookies.logintoken);
 
-  LoginToken.findOne({ email: cookie.email,
-                       series: cookie.series,
-                       token: cookie.token }, (function(err, token) {
+  LoginToken.findOne({ email: cookie.email, series: cookie.series, token: cookie.token }, (function(err, token) {
     if (!token) {
       res.redirect('/sessions/new');
       return;
@@ -341,19 +344,12 @@ app.post('/user/wallposts/comment', loadUser, function(req, res, next) {
 });
 
 
- 
-
-
- 
- 
-
-
 app.get('/user/wallposts/:id', loadUser, function(req, res) {
   var friendpost = new Array();
   var comntArray = new Array();
   var comntUser = new Array();
   var clicked_user =  User.findById(req.param('id'),function(err,clickeduser) {
-    var post = WallPost.find({posted_on_user_id : clickeduser.id}).sort({created: -1}).execFind(function(err, posts) {
+    var post = WallPost.find({posted_on_user_id : clickeduser.id}).sort({created: -1}).exec(function(err, posts) {
        if(posts.length == 0) {
          var user = User.findById(clickeduser.id,function(err,user) {
            res.render('wallpost/index', {
@@ -369,7 +365,7 @@ app.get('/user/wallposts/:id', loadUser, function(req, res) {
          comntArray[i] =  posts[i].id
        }
        var user = User.find({_id: {$in :friendpost}},function(err,users) {
-         var comment = Comment.find({post_id: {$in :comntArray}}).sort({created: -1}).execFind(function(err, comments) {
+         var comment = Comment.find({post_id: {$in :comntArray}}).sort({created: -1}).exec(function(err, comments) {
            for(var i=0;i<comments.length;i++){
              comntUser[i]= comments[i].user_id;
            }
@@ -604,7 +600,7 @@ app.get('/show/friends', loadUser, function(req, res){
            var ua = req.headers['user-agent'].toLowerCase();
 	if(/android.+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(ua)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|e\-|e\/|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(di|rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|xda(\-|2|g)|yas\-|your|zeto|zte\-/i.test(ua.substr(0,4))) {
            res.render('Social/friend', {
-	     locals: {
+        	   locals: {
 	       users:users,
                currentUser: req.currentUser
              }
@@ -643,9 +639,9 @@ app.post('/accept/request', loadUser, function(req, res){
 
 //show all friend requests
 app.get('/show/friendrequests', loadUser, function(req, res){
-  var myarray= new Array()
-  var friend = Friends.find({acceptor:req.currentUser.id,status:'0'},function(err, friends) {
-     if(friends.length==0) {
+  var myarray= new Array();
+  Friends.find({acceptor:req.currentUser.id,status:'0'},function(err, friends) {
+     if(friends.length == 0) {
       var ua = req.headers['user-agent'].toLowerCase();
       if(/android.+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(ua)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|e\-|e\/|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(di|rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|xda(\-|2|g)|yas\-|your|zeto|zte\-/i.test(ua.substr(0,4))) {
                           req.flash('No Friend Request Currently');
@@ -733,126 +729,126 @@ app.get('/userinfo/new',loadUser, function(req, res){
 //save photo
 app.post('/userinfo/new', function(req, res, next) {
   //req.form.pause();
-  req.form.complete(function(err, fields, files) {
-    if(err) {
-      next(err);
-    } else {
-      ins = fs.createReadStream(files.file.path);
-      ous = fs.createWriteStream(__dirname + '/public/uploads/photos/' + files.file.filename);
-      util.pump(ins, ous, function(err) {
-        if(err) {
-          req.flash('info', 'util.pump error');
-          next(err);
-        } else {  
-            console.log('within else');
-            var user = User.find({_id:req.session.user_id},function(err, users) {
-                  users[0].photo=files.file.filename;
-                  users[0].save(function(err) {
-                    console.log('inside users');
-                    if (err){
-      		      next(err)
-                    } else {
-                       req.flash('info', 'photo Succesfully Uploaded');
-        	       res.redirect('/userinfo');
-                    }
-                  });
-            });
-         }
-                                      
-       });                            
-    }
-  });
+	var form = new formidable.IncomingForm();
+	form.parse(req, function(err, fields, files) {
+		console.log(util.inspect(files));
+		var filename = files.file.name;
+	
+		// get the temporary location of the file
+		var tmp_path = files.file.path;
+		
+		// set where the file should actually exists - in this case it is in the "images" directory
+		var target_path = __dirname +'/public/uploads/photos/' + files.file.name;
+	
+		//if((file_extension in oc(extensionAllowed))&&((req.files.file.size /1024 )< maxSizeOfFile)){
+		fs.rename(tmp_path, target_path, function(err) {
+			if (err) throw err;
+			// delete the temporary file, so that the explicitly set temporary upload dir does not get filled with unwanted files
+			fs.unlink(tmp_path, function() {
+				if (err) throw err;
+			});
+		});
+		
+		User.find({_id:req.session.user_id},function(err, users) {
+			console.log(" ============== saved user === "+ users );
+			users[0].photo=files.file.name;
+			console.log(" ============== saved user === "+ users[0].photo );
+            users[0].save(function(err) {
+            	if(err) {
+            		console.log(err)
+            	} else {
+            		req.flash('info', 'photo Succesfully Uploaded');
+            		res.redirect('/userinfo');
+            	}
+           });
+       });
+	});
 });
 
 
- 
-
- 
-
 //show the videos posted by user
 app.get('/user/videos/:id',loadUser, function(req, res){
- var clicked_user =  User.findById(req.param('id'),function(err,clickeduser) {
-    var post = Post.find({user_id:clickeduser._id}).sort({created: -1}).execFind(function(err, posts) {
+ User.findById(req.param('id'),function(err,clickeduser) {
+    Post.find({user_id:clickeduser._id}).sort({'created': -1}).exec(function(err, posts) {
        if(posts.length == 0) {
-         var user = User.findById(clickeduser.id,function(err,user) {
+         User.findById(clickeduser.id,function(err,user) {
            res.render('videos/index1', {
-	     locals: {
-	         posts:posts,currentUser: req.currentUser, user:user, clickeduser:clickeduser
-             }
+        	   locals: {
+        		   posts:posts,currentUser: req.currentUser, user:user, clickeduser:clickeduser
+        	   }
            });
          });
        }
       else{
-      var ua = req.headers['user-agent'].toLowerCase();
-	if(/android.+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(ua)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|e\-|e\/|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(di|rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|xda(\-|2|g)|yas\-|your|zeto|zte\-/i.test(ua.substr(0,4))) {
+    	  var ua = req.headers['user-agent'].toLowerCase();
+    	  if(/android.+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(ua)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|e\-|e\/|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(di|rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|xda(\-|2|g)|yas\-|your|zeto|zte\-/i.test(ua.substr(0,4))) {
               res.render('Social/videos_posted', {
                 locals : { posts:posts ,currentUser: req.currentUser,clickeduser:clickeduser}
               });
+          }else {  
+    		  res.render('videos/index1', {
+    			  locals: {
+    				  posts: posts,currentUser: req.currentUser,clickeduser:clickeduser
+    			  }
+    		  });
           }
-       else {  
-	res.render('videos/index1', {
-          locals: {
-	    posts: posts,currentUser: req.currentUser,clickeduser:clickeduser
-	  }
-	});
-       }
-    }
+      }
    });
  });
 });
 //Save Uploaded Video
 app.post('/videos', function(req, res, next) {
-  //req.form.pause();
-  req.form.complete(function(err, fields, files) {
-    if(err) {
-      next(err);
-    } else {
-      ins = fs.createReadStream(files.file.path);
-      ous = fs.createWriteStream(__dirname + '/public/uploads/photos/' + files.file.filename);
-      var post = new Post();
-      post.filename=files.file.filename;
-      post.file=files.file.path;
-      post.created_at = new Date();
-      post.user_id = req.session.user_id;
-      
-      function postCreationFailed() {
-        req.flash('error', 'Unable to Download ');
-        res.render('videos/new', {
-          locals: {
-             post: new Post(),currentUser: req.session.user_id
-          }
-        });
-      }
-      
-      util.pump(ins, ous, function(err) {
-        if(err) {
-          next(err);
-        } else { 
-                 console.log('\nuploaded %s to %s',  files.file.filename, files.file.path);
-                 post.save(function(err) {
-                   if (err)
-      			return postCreationFailed();
-       	           req.flash('info', 'Video Succesfully Uploaded');
-        	   res.redirect('/user/videos/'+post.user_id);
-                });
-              }
-      });
-    }
-  });
-  req.form.on('progress', function(bytesReceived, bytesExpected){
-    var percent = (bytesReceived / bytesExpected * 100) | 0;
-    process.stdout.write('Uploading: %' + percent + '\r');
-  });
-  
-});
+ 
+	var form = new formidable.IncomingForm();
+	
+	form.parse(req, function(err, fields, files) {
+		console.log(util.inspect(files));
+		var filename = files.file.name;
+	
+		// get the temporary location of the file
+		var tmp_path = files.file.path;
+		console.log("==============temp path="+ tmp_path );
 
+		// set where the file should actually exists - in this case it is in the "images" directory
+		var target_path = __dirname +'/public/uploads/photos/' + files.file.name;
+	
+		//if((file_extension in oc(extensionAllowed))&&((req.files.file.size /1024 )< maxSizeOfFile)){
+		fs.rename(tmp_path, target_path, function(err) {
+			if (err) throw err;
+			// delete the temporary file, so that the explicitly set temporary upload dir does not get filled with unwanted files
+			fs.unlink(tmp_path, function() {
+				if (err) throw err;
+			});
+		});
+		
+		var post = new Post();
+		
+		post.filename = filename;
+        post.file=target_path;
+        post.created_at = new Date();
+        post.user_id = req.session.user_id;
+        
+    	post.save(function(err) {
+    		if (err) {
+                return postCreationFailed();
+            } else {
+            	console.log('\nuploaded %s to %s',  filename, target_path );
+            	req.flash('info', 'Video Succesfully Uploaded');
+        		res.redirect('/user/videos/'+post.user_id);
+            }
+    		
+    	});
+    	
+	});
+	
+});
 
 //New Upload
 app.get('/videos/new',loadUser, function(req, res){
   res.render('videos/new', {
-             locals: {
-               post: new Post(),currentUser: req.currentUser
-             }
+     locals: {
+       post: new Post(),currentUser: req.currentUser
+     }
   });
 });
 
@@ -934,8 +930,8 @@ app.get('/userinfo/profile/:id',loadUser, function(req, res){
    console.log("req.current user id ", req.currentUser.id);
    User.findById(req.param('id'), function(error, user) {
      console.log("=======================yyyyy=========", user.is_active);
-     console.log("=======================uuuuuuuuuuuuuu-=========", user._id);
-     if(user._id == req.currentUser._id) {
+     console.log("=======================uuuuuuuuuuuuuu-=========", user.id);
+     if(user.id == req.currentUser.id) {
        twitterClient.userTimeline({screen_name : user.username, count:30},
         function(err, tweets) {
           if(tweets.length == 0) {
@@ -1007,13 +1003,11 @@ app.get('/userinfo',loadUser, function(req, res){
 	}
         else {
            res.render('userinfo/index', {
-	     locals: {
-	       user:user,currentUser: req.currentUser
-             }
+        	   locals: {
+        		   user:user,currentUser: req.currentUser
+        	   }
            });
-
        }
-      
   });
 });
 
@@ -1026,11 +1020,12 @@ app.post('/users.:format?', function(req, res) {
   var last_name = req.body.user.last_name;
   var age = req.body.user.age;
   var password = req.body.user.password; 
-  var user = new User(req.body.user);
   var sex = req.body.user.sex;
-  user.photo='default.png';
   var sensor = false;
   var address = req.body.user.location;
+  
+  var user = new User(req.body.user);
+  user.photo='default.png';
   
   geo.geocoder(geo.google, address, sensor,function(formattedAddress, latitude, longitude) {
     console.log("Formatted Address: " + formattedAddress);
@@ -1287,5 +1282,6 @@ if (!module.parent) {
   app.listen(8000);
   console.log("Express server listening on port %d, log on to http://127.0.0.1:8000", app.address().port);
 }
+
 
 
