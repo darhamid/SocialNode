@@ -1,4 +1,5 @@
 // Force test environment
+//helper tests written
 process.env.NODE_ENV = 'test';
 var state = {
   models: []
